@@ -11,6 +11,15 @@ public:
         cout << "Вызван конструктор Base()" << endl;
     }
 
+    // 2. Конструктор из указателя (переименуем чтобы не было конфликта)
+    Base(Base* ptr) {
+        cout << "Вызван конструктор Base(Base*)" << endl;
+    }
+
+    // 3. Конструктор  (это конструктор копирования)
+    Base(Base& ref) {
+        cout << "Вызван конструктор копирования Base(Base&)" << endl;
+    }
     // Виртуальный деструктор
     virtual ~Base() {
         cout << "Вызван деструктор ~Base()" << endl;
@@ -34,13 +43,22 @@ public:
     Desc() {
         cout << "Вызван конструктор Desc()" << endl;
     }
+    // 2. Конструктор из указателя
+    Desc(Desc* ptr) : Base(ptr) {
+        cout << "Вызван конструктор Desc(Desc*)" << endl;
+    }
+
+    // 3. Конструктор 
+    Desc(Desc& ref) : Base(ref) {
+        cout << "Вызван конструктор копирования Desc(Desc&)" << endl;
+    }
 
     // Деструктор
     ~Desc() override {
         cout << "Вызван деструктор ~Desc()" << endl;
     }
 
-    // Переопределяем обычный метод (это перекрытие, hiding)
+    // Переопределяем обычный метод 
     void SimpleMethod() {
         cout << "Вызван Desc::SimpleMethod()" << endl;
     }
@@ -50,6 +68,28 @@ public:
         cout << "Вызван Desc::VirtualMethod()" << endl;
     }
 };
+// Функции для экспериментов с передачей параметров
+void func_by_value(Base obj) {
+    cout << "--- ВНУТРИ func_by_value ---" << endl;
+    obj.SimpleMethod();
+    obj.VirtualMethod();
+    cout << "--- КОНЕЦ func_by_value ---" << endl;
+}
+
+void func_by_pointer(Base* obj) {
+    cout << "--- ВНУТРИ func_by_pointer ---" << endl;
+    obj->SimpleMethod();
+    obj->VirtualMethod();
+    cout << "--- КОНЕЦ func_by_pointer ---" << endl;
+}
+
+void func_by_reference(Base& obj) {
+    cout << "--- ВНУТРИ func_by_reference ---" << endl;
+    obj.SimpleMethod();
+    obj.VirtualMethod();
+    cout << "--- КОНЕЦ func_by_reference ---" << endl;
+}
+
 int main() {
     setlocale(LC_ALL, "rus");
 
@@ -92,6 +132,33 @@ int main() {
     delete ptr_base;
     delete ptr_desc;
     delete ptr_base_to_desc;
+
+    cout << "=== ЭКСПЕРИМЕНТ 4: Передача объектов в функции ===" << endl;
+
+    cout << "\n--- Создаем объекты для экспериментов ---" << endl;
+    Base base_obj;
+    Desc desc_obj;
+
+    cout << "\n--- 1. Передача Base по значению ---" << endl;
+    func_by_value(base_obj);
+
+    cout << "\n--- 2. Передача Desc по значению ---" << endl;
+    func_by_value(desc_obj);  // ВНИМАНИЕ: здесь сработает конструктор копирования Base!
+
+    cout << "\n--- 3. Передача Base по указателю ---" << endl;
+    func_by_pointer(&base_obj);
+
+    cout << "\n--- 4. Передача Desc по указателю ---" << endl;
+    func_by_pointer(&desc_obj);
+
+    cout << "\n--- 5. Передача Base по ссылке ---" << endl;
+    func_by_reference(base_obj);
+
+    cout << "\n--- 6. Передача Desc по ссылке ---" << endl;
+    func_by_reference(desc_obj);
+
+    cout << "\n=== Конец экспериментов ===" << endl;
+
 
     return 0;
 }
