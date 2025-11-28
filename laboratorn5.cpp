@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <string>
 #include <memory>
+#include <vector>
 
 using namespace std;
 
@@ -41,6 +42,15 @@ public:
     virtual void VirtualMethod() {
         cout << "Вызван Base::VirtualMethod()" << endl;
     }
+
+    // Методы для проверки типа
+    virtual string classname() const {
+        return "Base";
+    }
+
+    virtual bool isA(const string& className) const {
+        return className == "Base";
+    }
 };
 
 // Класс-наследник
@@ -78,6 +88,15 @@ public:
     // Переопределяем виртуальный метод
     void VirtualMethod() override {
         cout << "Вызван Desc::VirtualMethod()" << endl;
+    }
+
+    // Переопределяем методы проверки типа
+    string classname() const override {
+        return "Desc";
+    }
+
+    bool isA(const string& className) const override {
+        return (className == "Desc") || Base::isA(className);
     }
 };
 // Функции для экспериментов с передачей параметров
@@ -173,6 +192,71 @@ void raw_pointer_problem() {
     cout << "Выходим из функции - ПАМЯТЬ НЕ ОСВОБОЖДЕНА!" << endl;
 }
 
+// Функции для экспериментов с приведением типов
+void dangerous_cast_example() {
+    cout << "\n--- ОПАСНОЕ ПРИВЕДЕНИЕ ТИПОВ ---" << endl;
+
+    Base* base_ptr = new Base();  // Это действительно Base
+
+    // ОПАСНОЕ приведение - без проверки!
+    Desc* desc_ptr = (Desc*)base_ptr;  // Принудительное приведение
+
+    cout << "Опасное приведение выполнено: ";
+    desc_ptr->SimpleMethod();  // Может привести к краху!
+
+    delete base_ptr;
+}
+
+void safe_cast_example() {
+    cout << "\n--- БЕЗОПАСНОЕ ПРИВЕДЕНИЕ ТИПОВ ---" << endl;
+
+    // Случай 1: Base* на самом деле указывает на Desc
+    Base* base_ptr1 = new Desc();
+
+    cout << "1. Проверка через isA(): ";
+    if (base_ptr1->isA("Desc")) {
+        cout << "Это Desc! Можно безопасно привести" << endl;
+        Desc* desc_ptr = dynamic_cast<Desc*>(base_ptr1);
+        desc_ptr->SimpleMethod();
+    }
+    else {
+        cout << "Это не Desc!" << endl;
+    }
+
+    // Случай 2: Base* действительно указывает на Base
+    Base* base_ptr2 = new Base();
+
+    cout << "2. Проверка через dynamic_cast: ";
+    Desc* desc_ptr2 = dynamic_cast<Desc*>(base_ptr2);
+    if (desc_ptr2) {
+        cout << "Приведение успешно!" << endl;
+        desc_ptr2->SimpleMethod();
+    }
+    else {
+        cout << "Приведение НЕ удалось - это не Desc!" << endl;
+    }
+
+    delete base_ptr1;
+    delete base_ptr2;
+}
+
+void classname_example() {
+    cout << "\n--- ПРОВЕРКА ТИПА ЧЕРЕЗ classname() ---" << endl;
+
+    Base* obj1 = new Base();
+    Base* obj2 = new Desc();
+
+    cout << "obj1->classname(): " << obj1->classname() << endl;
+    cout << "obj2->classname(): " << obj2->classname() << endl;
+
+    // проблема classname() то что надо сравнивать строки
+    if (obj2->classname() == "Desc") {
+        cout << "obj2 действительно Desc!" << endl;
+    }
+
+    delete obj1;
+    delete obj2;
+}
 int main() {
     setlocale(LC_ALL, "rus");
 
@@ -285,6 +369,41 @@ int main() {
     sptr1->SimpleMethod();
     sptr2->SimpleMethod();
 
+    cout << "\n=== ЭКСПЕРИМЕНТ 7: Проверка типов ===" << endl;
+
+    classname_example();
+    safe_cast_example();
+
+
+    cout << "\n=== Финальная демонстрация ===" << endl;
+
+    // Создаем разные объекты в одном контейнере
+    vector<Base*> objects;
+    objects.push_back(new Base());
+    objects.push_back(new Desc());
+    objects.push_back(new Base());
+
+    cout << "Обрабатываем объекты в контейнере:" << endl;
+    for (Base* obj : objects) {
+        cout << "Объект: " << obj->classname();
+
+        // Безопасно работаем с Desc
+        if (Desc* desc = dynamic_cast<Desc*>(obj)) {
+            cout << " (это Desc!) -> ";
+            desc->SimpleMethod();
+        }
+        else {
+            cout << " (это Base) -> ";
+            obj->SimpleMethod();
+        }
+    }
+
+    // очищаем память
+    for (Base* obj : objects) {
+        delete obj;
+    }
+
+    cout << "\n=== ВСЕ ЭКСПЕРИМЕНТЫ ЗАВЕРШЕНЫ ===" << endl;
 
     return 0;
 }
