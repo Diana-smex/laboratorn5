@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <string>
+#include <memory>
 
 using namespace std;
 
@@ -130,6 +131,48 @@ Base* return_by_pointer_dynamic() {
     return dynamic_obj;  // БЕЗОПАСНО: объект в куче
 }
 
+// Функции для экспериментов с умными указателями
+void unique_ptr_experiment() {
+    cout << "\n--- UNIQUE_PTR эксперимент ---" << endl;
+
+    cout << "Создаем unique_ptr:" << endl;
+    unique_ptr<Base> uptr = make_unique<Base>();
+
+    cout << "Используем unique_ptr:" << endl;
+    uptr->SimpleMethod();
+
+    cout << "Выходим из функции - автоматическое удаление!" << endl;
+    
+}
+
+void shared_ptr_experiment() {
+    cout << "\n--- SHARED_PTR эксперимент ---" << endl;
+
+    cout << "Создаем shared_ptr:" << endl;
+    shared_ptr<Base> sptr1 = make_shared<Base>();
+
+    cout << "Копируем shared_ptr (счетчик ссылок увеличивается):" << endl;
+    shared_ptr<Base> sptr2 = sptr1;
+
+    cout << "Используем оба указателя:" << endl;
+    sptr1->SimpleMethod();
+    sptr2->SimpleMethod();
+
+    cout << "Выходим из функции - автоматическое удаление когда счетчик = 0!" << endl;
+}
+
+void raw_pointer_problem() {
+    cout << "\n--- ПРОБЛЕМА ОБЫЧНЫХ УКАЗАТЕЛЕЙ ---" << endl;
+
+    cout << "Создаем динамический объект:" << endl;
+    Base* raw_ptr = new Base();
+
+    cout << "Используем объект:" << endl;
+    raw_ptr->SimpleMethod();
+
+    cout << "Выходим из функции - ПАМЯТЬ НЕ ОСВОБОЖДЕНА!" << endl;
+}
+
 int main() {
     setlocale(LC_ALL, "rus");
 
@@ -216,7 +259,32 @@ int main() {
     ptr2->SimpleMethod();
     delete ptr2;  
 
-    cout << "\n=== Конец эксперимента 5 ===" << endl;
+    cout << "\n=== ЭКСПЕРИМЕНТ 6: Умные указатели ===" << endl;
+
+    unique_ptr_experiment();
+    shared_ptr_experiment();
+    raw_pointer_problem();
+
+    cout << "\n=== Демонстрация передачи умных указателей ===" << endl;
+
+    // unique_ptr нельзя копировать, но можно перемещать
+    cout << "--- Перемещение unique_ptr ---" << endl;
+    unique_ptr<Base> uptr1 = make_unique<Base>();
+    cout << "Перемещаем uptr1 в uptr2:" << endl;
+    unique_ptr<Base> uptr2 = move(uptr1);
+    if (!uptr1) {
+        cout << "uptr1 теперь пустой!" << endl;
+    }
+
+    // shared_ptr можно копировать
+    cout << "--- Копирование shared_ptr ---" << endl;
+    shared_ptr<Base> sptr1 = make_shared<Base>();
+    cout << "Копируем sptr1 в sptr2:" << endl;
+    shared_ptr<Base> sptr2 = sptr1;
+    cout << "Оба указателя работают:" << endl;
+    sptr1->SimpleMethod();
+    sptr2->SimpleMethod();
+
 
     return 0;
 }
