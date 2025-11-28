@@ -20,6 +20,12 @@ public:
     Base(Base& ref) {
         cout << "Вызван конструктор копирования Base(Base&)" << endl;
     }
+
+    // Конструктор копирования (const версия)
+    Base(const Base& other) {
+        cout << "Вызван конструктор копирования Base(const Base&)" << endl;
+    }
+
     // Виртуальный деструктор
     virtual ~Base() {
         cout << "Вызван деструктор ~Base()" << endl;
@@ -51,6 +57,11 @@ public:
     // 3. Конструктор 
     Desc(Desc& ref) : Base(ref) {
         cout << "Вызван конструктор копирования Desc(Desc&)" << endl;
+    }
+
+    // Конструктор копирования (const версия)  
+    Desc(const Desc& other) : Base(other) {
+        cout << "Вызван конструктор копирования Desc(const Desc&)" << endl;
     }
 
     // Деструктор
@@ -88,6 +99,35 @@ void func_by_reference(Base& obj) {
     obj.SimpleMethod();
     obj.VirtualMethod();
     cout << "--- КОНЕЦ func_by_reference ---" << endl;
+}
+
+// Функции возврата объектов
+Base return_by_value_static() {
+    cout << "--- ВНУТРИ return_by_value_static ---" << endl;
+    Base local_obj;
+    cout << "--- ВОЗВРАЩАЕМ local_obj ---" << endl;
+    return local_obj;  // Возврат по значению - создается копия!
+}
+
+Base* return_by_pointer_static() {
+    cout << "--- ВНУТРИ return_by_pointer_static ---" << endl;
+    Base local_obj;
+    cout << "--- ВОЗВРАЩАЕМ &local_obj ---" << endl;
+    return &local_obj;  // ОПАСНО! Возвращаем адрес локального объекта!
+}
+
+Base& return_by_reference_static() {
+    cout << "--- ВНУТРИ return_by_reference_static ---" << endl;
+    Base local_obj;
+    cout << "--- ВОЗВРАЩАЕМ local_obj по ссылке ---" << endl;
+    return local_obj;  // ОПАСНО! Возвращаем ссылку на локальный объект!
+}
+
+Base* return_by_pointer_dynamic() {
+    cout << "--- ВНУТРИ return_by_pointer_dynamic ---" << endl;
+    Base* dynamic_obj = new Base();
+    cout << "--- ВОЗВРАЩАЕМ dynamic_obj ---" << endl;
+    return dynamic_obj;  // БЕЗОПАСНО: объект в куче
 }
 
 int main() {
@@ -143,7 +183,7 @@ int main() {
     func_by_value(base_obj);
 
     cout << "\n--- 2. Передача Desc по значению ---" << endl;
-    func_by_value(desc_obj);  // ВНИМАНИЕ: здесь сработает конструктор копирования Base!
+    func_by_value(desc_obj);  
 
     cout << "\n--- 3. Передача Base по указателю ---" << endl;
     func_by_pointer(&base_obj);
@@ -157,8 +197,26 @@ int main() {
     cout << "\n--- 6. Передача Desc по ссылке ---" << endl;
     func_by_reference(desc_obj);
 
-    cout << "\n=== Конец экспериментов ===" << endl;
+    cout << "\n";
 
+    cout << "\n=== ЭКСПЕРИМЕНТ 5: Возврат объектов из функций ===" << endl;
+
+    cout << "\n--- 1. Возврат по значению (static) ---" << endl;
+    Base obj1 = return_by_value_static();
+
+    cout << "\n--- 2. Возврат по указателю (static) - ОПАСНО! ---" << endl;
+    Base* ptr1 = return_by_pointer_static();
+  
+    cout << "\n--- 3. Возврат по ссылке (static) - ОПАСНО! ---" << endl;
+    Base& ref1 = return_by_reference_static();
+
+    cout << "\n--- 4. Возврат по указателю (dynamic) - безопасно ---" << endl;
+    Base* ptr2 = return_by_pointer_dynamic();
+    cout << "Используем ptr2: ";
+    ptr2->SimpleMethod();
+    delete ptr2;  
+
+    cout << "\n=== Конец эксперимента 5 ===" << endl;
 
     return 0;
 }
